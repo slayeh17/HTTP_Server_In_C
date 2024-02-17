@@ -6,79 +6,58 @@
 #include <string.h>
 #include <unistd.h> 
 
-#define PORT 6942
+#define PORT 6969
+#define LISTEN_BACKLOG 10
+
+int init_server() {
+
+	int flag;
+
+	int sfd = socket(AF_INET, SOCK_STREAM, 0);
+
+	struct sockaddr_in server_address;
+	server_address.sin_family = AF_INET;
+	server_address.sin_port = htons(PORT);
+	server_address.sin_addr.s_addr = INADDR_ANY;
+
+	flag = bind(sfd, (struct sockaddr*)&server_address, sizeof(server_address));
+	perror("bind");
+	if(flag == -1) 
+		exit(1);
+
+	listen(sfd, LISTEN_BACKLOG);
+	perror("listen");
+	if(flag == -1) 
+		exit(1);
+
+	return sfd;
+}
 
 int main() {
+	int sfd = init_server();
+	printf("Server is listening...\n");
 
-	FILE *html_data;
-	html_data = fopen("index.html", "r");
+	while (1) {
+		int cfd = accept(sfd, NULL, NULL);
 
-	if(html_data == NULL) {
-		printf("\nFILE NOT FOUND!\n");
-		return 1; 
-	}
+		char client_message[2000];
 
-	fseek(html_data, 0, SEEK_END);
-	int length = ftell(html_data);
-	fseek(html_data, 0, SEEK_SET);
+		recv(cfd, client_message, sizeof(client_message), 0);
 
-	char *content = malloc(sizeof(char)*(length+1));
-	if (content == NULL) {
-		printf("\nMEMORY ALLOCATION FAILED!\n");
-		fclose(html_data);
-		return 1; 
-	}
+		printf("%s\n", client_message);		
 
-	printf("\nNO OF CHARACTERS: %d\n", length);
+		FILE *fp_html = fopen("index.html", "r");
+		perror("fopen");
 
-	char c;
-	int i=0;
-	while ((c = fgetc(html_data))!=EOF)	{
-		printf("%c",c);
-		content[i++] = c;
-		printf("%d\n",i);
-		if(i==length) 
-			break;
-	}
-	content[i] = '\0'; 
+		if(fp_html == NULL)
+			exit(1);
 
-	fclose(html_data);
+		char content[10000];
 
-	char http_header[1024]; 
+		// size_t size = fread(content, )
 
-	strcpy(http_header, "HTTP/1.1 200 OK\r\n\n"); 
-
-	strcat(http_header, content);
-
-	int tcp_server_socket, tcp_client_socket; // File Descriptors
-	struct sockaddr_in server_addr;
-
-	tcp_server_socket = socket(AF_INET, SOCK_STREAM, 0);
-	perror("socket");
-
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(PORT); 
-	server_addr.sin_addr.s_addr = INADDR_ANY;
-
-	bind(tcp_server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr));
-	perror("bind");
-
-	listen(tcp_server_socket, 10);
-	perror("listen");
-
-	printf("\nServer is Listening on...PORT: %d\n", PORT);
-
-	while(1) {
-		tcp_client_socket = accept(tcp_server_socket, NULL, NULL);
-		perror("accept");
-
-		ssize_t sent = send(tcp_client_socket, http_header, strlen(http_header), 0);
+		send(cfd, "<h1>Hey</h1>", 13, 0); 
 		perror("send");
-
-		close(tcp_client_socket);
+		close(cfd);
 	}
-
-	free(content);
-	close(tcp_server_socket);
-	return 0;
 }
