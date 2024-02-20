@@ -1,10 +1,13 @@
-body {
+* {
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    width: 100vw;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(
-        rgb(255, 171, 15),
-        rgb(92, 92, 92)
-    );
-    color: white;
-}
+    background: linear-gradient(#2193b0, #6dd5ed);
+    color: rgb(255, 255, 255);
+  }

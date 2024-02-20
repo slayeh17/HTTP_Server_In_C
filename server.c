@@ -35,7 +35,7 @@ int init_server() {
 
 int main() {
 	int sfd = init_server();
-	printf("Server is listening...\n");
+	printf("Server is listening...PORT: %d\n", PORT);
 
 	while (1) {
 		int cfd = accept(sfd, NULL, NULL);
@@ -46,18 +46,40 @@ int main() {
 
 		printf("%s\n", client_message);		
 
+		char http_header[] = "HTTP/1.0 200 OK\r\n"
+                  "Content-type: text/html\r\n\r\n";
+
+		
 		FILE *fp_html = fopen("index.html", "r");
-		perror("fopen");
+		fseek(fp_html, 0L, SEEK_END);
+		long length_html = ftell(fp_html);
+		fseek(fp_html, 0, SEEK_SET);
 
-		if(fp_html == NULL)
-			exit(1);
+		printf("SIZE OF HTML FILE: %ld bytes\n", length_html);
 
-		char content[10000];
+		FILE *fp_css = fopen("styles.css", "r");
+		fseek(fp_css, 0L, SEEK_END);
+		long length_css = ftell(fp_css);
+		fseek(fp_css, 0, SEEK_SET);
 
-		// size_t size = fread(content, )
+		printf("SIZE OF CSS FILE: %ld bytes\n", length_css);
 
-		send(cfd, "<h1>Hey</h1>", 13, 0); 
-		perror("send");
+		char response[length_html+length_css+1];
+
+		while(fgets(response, length_html, fp_html) != NULL) {
+			strcat(http_header, response);
+		}
+
+		strcat(http_header, "<style>");
+
+		while(fgets(response, length_css, fp_css) != NULL) {
+			strcat(http_header, response);
+		}
+
+		strcat(http_header, "</style>");
+
+		send(cfd, http_header, strlen(http_header), 0);
+
 		close(cfd);
 	}
 }
