@@ -1,6 +1,6 @@
 FROM gcc:latest
-COPY . /usr/src/debakerserver
-WORKDIR /usr/src/debakerserver
-RUN gcc -o debakerserver server.c
+COPY . /usr/src/chttpserver
+WORKDIR /usr/src/chttpserver
 EXPOSE 6969
-CMD ["./debakerserver"]
+RUN gcc -o server server.c
+CMD [ "./server" ]
